@@ -1,13 +1,13 @@
-GPU_ID: '0' 
+GPU_ID: '4,5,6,7' 
 model_restore: '' 
 
-log_dir: exp/logs/bmx-trees
-dir_video: 'inputs/videos/bmx-trees' 
-dir_mask: 'inputs/masks/bmx-trees'
+log_dir: exp/logs/blackswan
+dir_video: 'inputs/videos/blackswan' 
+dir_mask: 'exp/results/blackswan-mask'
 
 # training
-img_shapes: [320, 600]
-batch_size: 5
+img_shapes: [320, 608]
+batch_size: 8
 lr: 0.0002
 
 max_iters: 50000

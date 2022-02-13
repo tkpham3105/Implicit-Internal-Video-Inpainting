@@ -1,4 +1,4 @@
-GPU_ID: '1' 
+GPU_ID: '4,5,6,7' 
 model_restore: '' 
 
 log_dir: exp/logs/blackswan-mask
@@ -7,7 +7,7 @@ dir_mask: 'inputs/masks/blackswan'
 
 # training
 img_shapes: [320, 608]
-batch_size: 6
+batch_size: 8
 lr: 0.0001
 
 max_iters: 8000

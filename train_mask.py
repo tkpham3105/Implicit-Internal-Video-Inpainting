@@ -12,7 +12,7 @@ if __name__ == "__main__":
     FLAGS = Config('config/train_seg.yml')
     os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.GPU_ID 
     
-
+    mirrored_strategy = tf.distribute.MirroredStrategy()
     # define the model
     model = UnetModel()
     if not FLAGS.model_restore=="":
@@ -24,11 +24,13 @@ if __name__ == "__main__":
     # define the dataloader 
     full_ds = dl.build_dataset_seg(FLAGS.dir_video, FLAGS.dir_mask,
                                 FLAGS.batch_size, FLAGS.max_epochs, FLAGS.img_shapes[0], FLAGS.img_shapes[1])
+    
+    dist_full_ds = mirrored_strategy.experimental_distribute_dataset(full_ds)
     #summary writer
     writer = tf.summary.create_file_writer(FLAGS.log_dir)
 
     # define the training steps and loss
-    @tf.function
+    
     def training_step(batch_data, step, shift_h, shift_w):
         batch_pos = batch_data[0]
         mask1 = batch_data[1] > 0.8
@@ -37,10 +39,10 @@ if __name__ == "__main__":
         mask2 = []
         img_shift = []
         for i in range(batch_pos.shape[0]):
-          mask2_ = tf.roll(tf.expand_dims(mask1[0], 0), (shift_h[i], shift_w[i]), axis=(1,2))  
-          img_shift_ = tf.roll(tf.expand_dims(batch_pos[0],0), (shift_h[i], shift_w[i]), axis=(1,2))  
-          mask2.append(mask2_)
-          img_shift.append(img_shift_)
+            mask2_ = tf.roll(tf.expand_dims(mask1[0], 0), (shift_h[i], shift_w[i]), axis=(1,2))  
+            img_shift_ = tf.roll(tf.expand_dims(batch_pos[0],0), (shift_h[i], shift_w[i]), axis=(1,2))  
+            mask2.append(mask2_)
+            img_shift.append(img_shift_)
           
         mask2 = tf.concat(mask2, axis = 0)
         img_shift = tf.concat(img_shift, axis = 0)
@@ -68,14 +70,19 @@ if __name__ == "__main__":
 #                    tf.summary.scalar('loss', loss, step=step)
         return loss
 
+    @tf.function
+    def distributed_training_step(dataset_inputs, step, shift_h, shift_w):
+        per_replica_losses = mirrored_strategy.experimental_run_v2(training_step, args=(dataset_inputs, step, shift_h, shift_w,))
+        return mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
+
     # start training
-    for step, batch_data in enumerate(full_ds):
+    for step, batch_data in enumerate(dist_full_ds):
         shift_h = np.random.randint(FLAGS.img_shapes[0], size = FLAGS.batch_size)
         shift_w = np.random.randint(FLAGS.img_shapes[1], size = FLAGS.batch_size)
         step = tf.convert_to_tensor(step, dtype=tf.int64)
         shift_h = tf.convert_to_tensor(shift_h, dtype=tf.int64)
         shift_w = tf.convert_to_tensor(shift_w, dtype=tf.int64)
-        losses = training_step(batch_data, step, shift_h, shift_w)
+        losses = distributed_training_step(batch_data, step, shift_h, shift_w)
 
         if step % FLAGS.print_iters == 0:
             print("Step:", step, "Loss", losses)
