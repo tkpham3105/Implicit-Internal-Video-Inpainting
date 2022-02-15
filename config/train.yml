@@ -1,16 +1,16 @@
 GPU_ID: '4,5,6,7' 
-model_restore: '' 
+model_restore: 'exp/logs/truck-stereo/checkpoint_50000'
 
-log_dir: exp/logs/blackswan
-dir_video: 'inputs/videos/blackswan' 
-dir_mask: 'exp/results/blackswan-mask'
+log_dir: exp/logs/truck-stereo-a-s
+dir_video: 'inputs/videos/truck-stereo' 
+dir_mask: 'inputs/masks/truck-stereo'
 
 # training
-img_shapes: [320, 608]
-batch_size: 8
+img_shapes: [400, 884]
+batch_size: 1
 lr: 0.0002
 
-max_iters: 50000
+max_iters: 40000
 max_epochs: 20000
 print_iters: 500
 summary_iters: 2500
@@ -24,8 +24,8 @@ padding: 'SAME'
 
 
 # loss
-stabilization_loss: False 
-ambiguity_loss: False
+stabilization_loss: True 
+ambiguity_loss: True
 l1_loss: True
 l1_loss_alpha: 1.
 stabilization_loss_alpha: 0.2 

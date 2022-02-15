@@ -1,12 +1,12 @@
-GPU_ID: '0' 
-model_restore: 'exp/logs/blackswan/checkpoint_50000' 
+GPU_ID: '4' 
+model_restore: 'exp/logs/truck-stereo/checkpoint_40000' 
 
-test_dir: exp/results/blackswan
-dir_video: 'inputs/videos/blackswan' 
-dir_mask: 'exp/results/blackswan-mask'
+test_dir: exp/results/truck-stereo
+dir_video: 'inputs/videos/truck-stereo' 
+dir_mask: 'inputs/masks/truck-stereo'
 
 
-img_shapes: [320, 608]
+img_shapes: [400, 884]
 coarse_only: False 
 use_refine: True 
 padding: 'SAME'

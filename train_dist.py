@@ -13,6 +13,14 @@ if __name__ == "__main__":
     FLAGS = Config('config/train.yml')
     os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.GPU_ID 
     
+    #vgg = None
+    #if FLAGS.ambiguity_loss:
+    #    vgg = keras.applications.VGG19(include_top=False, weights='imagenet')
+    #    outputs = [vgg.get_layer('block4_conv2').output]
+    #    vgg = keras.Model([vgg.input], outputs)
+    #    vgg.trainable = False
+
+
     mirrored_strategy = tf.distribute.MirroredStrategy()
     with mirrored_strategy.scope():
     
@@ -119,7 +127,7 @@ if __name__ == "__main__":
     @tf.function
     def distributed_train_step(dataset_inputs, step):
         # experimental_run_v2 works for tf 2.0. have not tested on tf 2.4
-        per_replica_losses = mirrored_strategy.experimental_run_v2(training_step, args=(dataset_inputs, step,))
+        per_replica_losses = mirrored_strategy.experimental_run_v2(training_step, args=(dataset_inputs, step))
         return mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
 
     # start training
