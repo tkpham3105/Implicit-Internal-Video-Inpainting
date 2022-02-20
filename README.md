@@ -33,6 +33,7 @@ The environment can be simply set up by Anaconda:
 ```
 conda create -n IIVI python=3.7 tensorflow-gpu=2.0
 conda activate IIVI
+conda install -c conda-forge vim
 pip install pyaml opencv-python tensorflow-addons==0.6.0
 ```
 
