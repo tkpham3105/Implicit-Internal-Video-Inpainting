@@ -11,16 +11,9 @@ from loss import ambiguity_loss, stable_loss
 if __name__ == "__main__":
     # read config 
     FLAGS = Config('config/train.yml')
-    os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.GPU_ID 
-    
-    #vgg = None
-    #if FLAGS.ambiguity_loss:
-    #    vgg = keras.applications.VGG19(include_top=False, weights='imagenet')
-    #    outputs = [vgg.get_layer('block4_conv2').output]
-    #    vgg = keras.Model([vgg.input], outputs)
-    #    vgg.trainable = False
-
-
+    os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.GPU_ID
+    tf.get_logger().setLevel('ERROR')
+    # tf.config.experimental_run_functions_eagerly(True) 
     mirrored_strategy = tf.distribute.MirroredStrategy()
     with mirrored_strategy.scope():
     
@@ -36,9 +29,13 @@ if __name__ == "__main__":
         if not FLAGS.model_restore=="":
             model.load_weights(FLAGS.model_restore)
             
-            
         # define the optimizer
         optimizer = keras.optimizers.Adam(learning_rate=FLAGS.lr, beta_1=0.9, beta_2=0.999)
+
+        vgg = keras.applications.VGG19(include_top=False, weights='imagenet')
+        vgg.trainable = False
+        outputs = [vgg.get_layer('block4_conv2').output]
+        vgg = keras.Model([vgg.input], outputs) 
 
     # define the dataloader 
     full_ds = dl.build_dataset_video(FLAGS.dir_video, FLAGS.dir_mask, FLAGS.dir_mask, 
@@ -70,7 +67,6 @@ if __name__ == "__main__":
         # stabilization loss
         if FLAGS.stabilization_loss:
             T = stable_loss.get_transform(FLAGS)
-
             # Perform transformation
             T_batch_pos = tfa.image.transform(batch_pos, T, interpolation = 'BILINEAR')
             Tmask = tfa.image.transform(mask, T, interpolation = 'NEAREST')
@@ -91,19 +87,20 @@ if __name__ == "__main__":
                 loss += FLAGS.l1_loss_alpha * tf.reduce_mean(tf.abs(batch_pos - x2)*(1-mask2))
                 
                 if FLAGS.stabilization_loss:
+                    # print(f"Tx = {Tx.shape}, Tmask = {Tmask.shape}")
                     Tx1, Tx2 = model(Tx, Tmask)
+                    # print(f"Tx1 = {Tx1.shape}, x1 = {x1.shape}, Tx2 = {Tx2.shape}, x2 = {x2.shape}")
+                    # print(f"T_batch_pos = {T_batch_pos.shape}, batch_pos = {batch.shape}, Tmask_n = {Tmask_n.shape}")
                     loss += FLAGS.stabilization_loss_alpha * tf.reduce_mean(tf.abs((Tx2 - x2)-(T_batch_pos-batch_pos)) * (1-Tmask_n))
                     loss += FLAGS.stabilization_loss_alpha * tf.reduce_mean(tf.abs((Tx1 - x1)-(T_batch_pos-batch_pos)) * (1-Tmask_n))
                     
                 if FLAGS.ambiguity_loss:
                     #loss += FLAGS.ambiguity_loss_alpha*ambiguity_loss.perceptual_loss((1-mask2)*x2, (1-mask2)*batch_pos)
-                    loss +=  FLAGS.ambiguity_loss_alpha*ambiguity_loss.contextual_loss((1-mask2[::-1,:,:,:])*x2, (1-mask2[::-1,:,:,:])*batch_pos[::-1,:,:,:])                     
-
+                    loss +=  FLAGS.ambiguity_loss_alpha*ambiguity_loss.contextual_loss((1-mask2[::-1,:,:,:])*x2, (1-mask2[::-1,:,:,:])*batch_pos[::-1,:,:,:], vgg)
             else:
                 x1 = model(x) 
                 loss = FLAGS.l1_loss_alpha * tf.reduce_mean(tf.abs(batch_pos - x1)*(1-mask2))
                 x2 = x1
-        
 
         grads = tape.gradient(loss, model.trainable_weights)
         optimizer.apply_gradients(zip(grads, model.trainable_weights))
@@ -124,7 +121,7 @@ if __name__ == "__main__":
         return loss
     
 
-    @tf.function
+    #@tf.function
     def distributed_train_step(dataset_inputs, step):
         # experimental_run_v2 works for tf 2.0. have not tested on tf 2.4
         per_replica_losses = mirrored_strategy.experimental_run_v2(training_step, args=(dataset_inputs, step))
@@ -146,4 +143,5 @@ if __name__ == "__main__":
 
         if step >= FLAGS.max_iters:
             break
+
     print('finished!')

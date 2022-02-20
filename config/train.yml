@@ -1,13 +1,13 @@
-GPU_ID: '4,5,6,7' 
+GPU_ID: '0,1,2,3,4,5,6,7' 
 model_restore: 'exp/logs/truck-stereo/checkpoint_50000'
 
-log_dir: exp/logs/truck-stereo-a-s
+log_dir: exp/logs/truck-stereo-sa
 dir_video: 'inputs/videos/truck-stereo' 
 dir_mask: 'inputs/masks/truck-stereo'
 
 # training
 img_shapes: [400, 884]
-batch_size: 1
+batch_size: 8
 lr: 0.0002
 
 max_iters: 40000

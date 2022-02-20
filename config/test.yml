@@ -1,5 +1,5 @@
 GPU_ID: '4' 
-model_restore: 'exp/logs/truck-stereo/checkpoint_40000' 
+model_restore: 'exp/logs/truck-stereo/checkpoint_50000' 
 
 test_dir: exp/results/truck-stereo
 dir_video: 'inputs/videos/truck-stereo' 

@@ -2,11 +2,12 @@ import tensorflow as tf
 from tensorflow import keras
 
 # https://www.tensorflow.org/tutorials/generative/style_transfer
-def vgg_layers(layer_names):
-    vgg = keras.applications.VGG19(include_top=False, weights='imagenet')
-    vgg.trainable = False
-    outputs = [vgg.get_layer(name).output for name in layer_names]
-    return keras.Model([vgg.input], outputs)
+# def vgg_layers(layer_names, vgg):
+    # vgg = keras.applications.VGG19(include_top=False, weights='imagenet')
+    # vgg = keras.models.load_model("side_ckpt/vgg.h5")
+    # vgg.trainable = False
+    # outputs = [vgg.get_layer(name).output for name in layer_names]
+    # return keras.Model([vgg.input], outputs)
 
 
 def perceptual_loss(img1, img2):
@@ -20,10 +21,9 @@ def perceptual_loss(img1, img2):
     return loss
     
     
-def contextual_loss(img1, img2) :
-    vgg = vgg_layers( ['block4_conv2'])
-    vgg.trainable = False
-    
+def contextual_loss(img1, img2, vgg):
+    # vgg = vgg_layers( ['block4_conv2'], vgg)
+    # vgg.trainable = False
     img1_ = keras.applications.vgg19.preprocess_input((img1+1)*127.5)
     img2_ = keras.applications.vgg19.preprocess_input((img2+1)*127.5)
     img1_features =  vgg(img1_)
