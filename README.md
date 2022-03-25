@@ -41,6 +41,7 @@ Or, you can also   set up the environment from the provided `environment.yml`:
 ```
 conda env create -f environment.yml
 conda activate IIVI
+pip3 install torch==1.1.0 torchvision==0.3.0 -f https://download.pytorch.org/whl/cu90/torch_stable.html
 ```
 
 ## Usage
