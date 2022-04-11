@@ -1,0 +1,43 @@
+GPU_ID: '0,2,6' 
+
+#model_restore: '/data/tk/IIVI-data/exp/logs/trial3/seg6_L_111/checkpoint_37500'
+model_restore: ''
+
+log_dir: '/data/tk/IIVI-data/exp/logs/trial3/seg4_L_111'
+dir_video: '/data/tk/IIVI-data/inputs/seg4/videos' 
+dir_mask: '/data/tk/IIVI-data/inputs/seg4/masks'
+
+# training
+img_shapes: [496, 608]
+batch_size: 1
+lr: 0.0001
+
+max_iters: 40000
+max_epochs: 1000
+print_iters: 500
+summary_iters: 2500
+model_iters: 2500
+
+
+# Network
+coarse_only: False 
+use_refine: True 
+padding: 'SAME'
+dilate_mask: True
+
+# loss
+stabilization_loss: True
+ambiguity_loss: True
+disparity_loss: True
+l1_loss: True
+l1_loss_alpha: 1.
+stabilization_loss_alpha: 0.2 
+ambiguity_loss_alpha: 0.1
+disparity_loss_alpha: 0.05
+
+# disparity configuration
+max_disp: 192
+gpu_disp: 1
+crop_height: 512
+crop_width: 640
+checkpoint_disp: 'DSMNet/ckpt/best.pth'  
